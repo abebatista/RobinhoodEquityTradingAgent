@@ -17,7 +17,7 @@ Planning and progress stay internal. Never call, discover, or load `mark_chapter
 Every fenced Codex code block whose heading says **EXACT** is executable source, not pseudocode. Submit it byte-for-byte without rewriting, shortening, minifying, reformatting, or regenerating any validator, regular expression, state check, command, or result shape. Change only a value whose block explicitly marks it as a substitution. If the exact block cannot be copied intact, stop before its first state change or tool call; never author an equivalent replacement from memory.
 
 ## Runtime requirement — model
-Use **Codex Sol 5.6 (high)** for this routine. Claude is not a recommended or supported deployment runner: although Sonnet 4.6 historically completed live buys and protective stops, the later tested Sonnet 5, Haiku 4.5, and Opus 4.6 scheduled sessions refused live financial-trade execution under a higher-priority model-policy boundary despite explicit authorization. Repository instructions cannot override that boundary. Codex Luna 5.6 remains the efficient high-volume option, but its 2026-08-26 scheduled cohort repeatedly violated exact launcher, receipt, wrapper, and finalization contracts. Codex Terra 5.6 likewise altered exact UUID validators and skipped a required DAILY-LOSS phase in five of six early-session attempts on 2026-08-27; its eight early scheduled launches on 2026-08-28 then produced seven outright orchestration failures plus one safely finalized but degraded scan path. Luna and Terra are not the current unattended recommendation for this exact-execution workload. Model selection is set in the agent platform's configuration, not enforced by this document: a runner must never halt merely because the selected model differs from this recommendation. Validate the approval-gated test runs on every model/configuration change rather than assuming behavior transfers.
+Use **Codex Terra 5.6 (high)** for this installation, as selected by the user on 2026-09-11. Keep its schedule paused until the repaired execution path passes the documented supervised acceptance. Claude is not a recommended or supported deployment runner: although Sonnet 4.6 historically completed live buys and protective stops, the later tested Sonnet 5, Haiku 4.5, and Opus 4.6 scheduled sessions refused live financial-trade execution under a higher-priority model-policy boundary despite explicit authorization. Repository instructions cannot override that boundary. Codex Luna 5.6 remains the efficient high-volume option, but its 2026-08-26 scheduled cohort repeatedly violated exact launcher, receipt, wrapper, and finalization contracts. Codex Terra 5.6 likewise altered exact UUID validators and skipped a required DAILY-LOSS phase in five of six early-session attempts on 2026-08-27; its eight early scheduled launches on 2026-08-28 then produced seven outright orchestration failures plus one safely finalized but degraded scan path. These earlier cohorts do not establish unattended reliability; Terra remains the selected model while the executable continuation is validated. Model selection is set in the agent platform's configuration, not enforced by this document: a runner must never halt merely because the selected model differs from this recommendation. Validate the approval-gated test runs on every model/configuration change rather than assuming behavior transfers.
 
 ### TIMING IDENTITY — deterministic provenance with self-report fallback
 
@@ -456,7 +456,9 @@ The already-bound `PYTHON_EXE` is the sole launcher for every Python command in 
 
 The JSON object is a versioned deterministic receipt. On EVERY routine invocation of `market_clock.py`, require one JSON object with `schema_version` exactly the JSON integer `1`; string `utc`, `et`, `pt`, `pt_iso`, `date_et`, `date_pt`, `historicals_start_time`, `constants_sha256`, `session`, and `calendar_status`; string-or-null `regular_close_et`; JSON-boolean `entry_session_open` and `opening_blackout`; and integer-or-null `minutes_since_open`. The checked-in producer owns this complete clock schema: runner glue must not count fields, compare `Object.keys(...)`, copy a separate expected-key list, or require an `action`, `ok`, `status`, or any other property not named here. The receipt contains the authoritative UTC / ET / PT times, `date_et` for broker-day accounting, `date_pt` for report/ledger naming, and a deterministic `historicals_start_time` computed from the larger configured bar lookback with weekend/holiday margin. It also contains the market session (`pre-market`, `regular`, `after-hours`, `closed`, `closed-weekend`, `closed-holiday`, `closed-early`, or `calendar-unknown`), the calendar status (`normal`, `early-close`, `holiday`, `weekend`, or `unknown`), the day's regular close, the entry-window verdict, minutes since the 09:30 ET open, and the opening-blackout verdict. Require `constants_sha256` to equal the preflight validator's `source_sha256` byte-for-byte; a missing/different/non-string hash means configuration changed after preflight and is a CONFIGURATION HALT, never a generic clock failure. Do not use the human-readable mode for a routing decision.
 
-**Use these START-CLOCK values for every run-wide time decision** — the Eastern broker date for the daily-loss calculation, the Pacific stop-fill date, the deterministic historicals start time, the initial opening-blackout and session gates, the re-entry cooldown window, dust-sweep lookback, ledger timestamps, report header, and every output filename. Do NOT convert zones, apply DST offsets, subtract lookback days, or write an ad-hoc clock by hand. START CLOCK itself is mandatory: if its non-configuration execution or JSON validation fails, finish the still-unbound lifecycle as `coordination-halt` / `clock-unavailable` and stop before lease acquisition, scratch creation, broker calls, or normal report/status files. The only permitted later readings are (1) the two DAILY-LOSS readings in SECOND that bracket quote collection, (2) the mandatory PRE-BUY REVALIDATIONS in Step 11, and (3) fresh ORDER-INTENT readings immediately before an intent baseline or reconciliation snapshot. The first DAILY-LOSS reading gives discovery a cutoff after the broker snapshot; the second is captured after the quotes and becomes the final `as_of_utc`. Both must have the same `date_et` as START CLOCK. PRE-BUY readings control only whether a buy may be placed now and which session-specific order style applies. ORDER-INTENT readings supply only `baseline.observed_at_utc` or `observe --as-of-utc`; they do not reopen a closed entry window. None of these later readings changes START CLOCK's historicals window, run-start timestamp, Pacific report date, ledger windows, report name, or earlier protection work. If any required **later** clock reading fails or crosses to another Eastern date, make no new buys this run and report the clock failure — protection steps still run. A constants-related failure is NEVER a generic clock failure: it remains a FULL-RUN HALT under the configuration preflight.
+**Use these START-CLOCK values for every run-wide time decision** — the Eastern broker date for the daily-loss calculation, the Pacific stop-fill date, the deterministic historicals start time, the initial opening-blackout and session gates, the re-entry cooldown window, dust-sweep lookback, ledger timestamps, report header, and every output filename. Do NOT convert zones, apply DST offsets, subtract lookback days, or write an ad-hoc clock by hand. START CLOCK itself is mandatory: if its non-configuration execution or JSON validation fails, finish the still-unbound lifecycle as `coordination-halt` / `clock-unavailable` and stop before lease acquisition, scratch creation, broker calls, or normal report/status files. The only permitted later readings are (1) the two DAILY-LOSS readings in SECOND that bracket quote collection, (2) the mandatory PRE-BUY REVALIDATIONS in Step 11, and (3) fresh ORDER-INTENT readings immediately before an intent baseline or reconciliation snapshot, and (4) the one RSI request reading immediately before its checked-in request plan. The RSI reading bounds the complete required indicator request window and never changes START CLOCK or entry eligibility. The first DAILY-LOSS reading gives discovery a cutoff after the broker snapshot; the second is captured after the quotes and becomes the final `as_of_utc`. Both must have the same `date_et` as START CLOCK. PRE-BUY readings control only whether a buy may be placed now and which session-specific order style applies. ORDER-INTENT readings supply only `baseline.observed_at_utc` or `observe --as-of-utc`; they do not reopen a closed entry window. None of these later readings changes START CLOCK's historicals window, run-start timestamp, Pacific report date, ledger windows, report name, or earlier protection work. If any required **later** clock reading fails or crosses to another Eastern date, make no new buys this run and report the clock failure — protection steps still run. A constants-related failure is NEVER a generic clock failure: it remains a FULL-RUN HALT under the configuration preflight.
+
+**Codex START CLOCK storage:** inside the same operation that validates the original START CLOCK receipt, store that complete unchanged object as `start_clock` in `rhmra.bootstrap-state.v1`, preserving its phase and every existing receipt. Reload and require exact serialized equality before the lifecycle preflight call. `bootstrap.start_clock` is the sole clock input to the checked-in DAILY-LOSS driver; never reconstruct it from dates, context receipts, output text, or another clock call.
 
 ### RUN COORDINATION — fenced single-flight lease
 Execute the canonical STARTUP SEQUENCE above without reordering it. Immediately after START CLOCK succeeds and its `pt_iso` is bound to lifecycle, and before scratch creation, any order-intent journal command, `rules_version`, `get_accounts`, or ANY broker call, invoke the checked-in combined lease/context action:
@@ -970,6 +972,11 @@ The immutable helper markers own interruption recovery. `broker_snapshot.py look
 
 ```javascript
 const runBoundJsonCommand = async commandArguments => {
+  if (commandArguments.shell === "powershell.exe" &&
+      !commandArguments.cmd.endsWith("\nexit $LASTEXITCODE")) {
+    commandArguments = {...commandArguments,
+      cmd: commandArguments.cmd + "\nexit $LASTEXITCODE"};
+  }
   const initialProcess = await tools.exec_command(commandArguments);
   let process = initialProcess;
   let output = String(process.output ?? "");
@@ -1281,6 +1288,10 @@ Regular-hours fractional market buy — same shape but `"type": "market"`, `"mar
 Note: this session logic governs BUYS. Stop-loss orders (Step 12) and market profit-taking sells (Step 2) generally execute only during regular hours — a stop placed in extended hours may be rejected or won't trigger until the regular session opens (see Tradeoffs).
 
 ### DAILY-LOSS CIRCUIT BREAKER — added guardrail (delete this block and Step 3 to disable)
+
+**Codex executable continuation:** the exact SECOND cell loads `tools/daily_loss_orchestration.js` through the fixed, read-only `daily_loss_orchestration.py --emit-javascript` loader before recording the SECOND attempt. It compiles the returned repository source inside that same `functions.exec` operation and immediately awaits its complete A/B workflow after `enter-second` succeeds. Do not copy, assemble, or re-author the source or the protocol fragments below, and do not supply model-written broker/command/save callbacks. The driver uses only the supplied Codex `tools`, exact tool registry, and executor `load`/`store` capabilities; Node is not required at runtime. The following recipes describe the protocol enforced by that checked-in driver and the equivalent non-Codex path. They are not additional Codex actions after the driver returns.
+
+The driver keeps an invocation-bound executor fence at `rhmra.daily-loss-execution.v1`. A running or completed fence prevents replay from another cell. Its full successful calculation wrapper is stored unchanged at `rhmra.transport-state.v1.daily_loss_receipt`; its compact outcome is stored at `daily_loss_orchestration`. If the outer cell yields, wait for that same cell; never load the module again or restart the workflow. The durable source journal still owns every source reservation and A/B transition. Only the checked-in Python helpers decide pagination semantics, symbol requirements, daily P&L, stop counts, and the guard checkpoint.
 **DEFINITION ONLY — THIS BLOCK IMPLEMENTS SECOND AND MUST NOT EXECUTE HERE.** Merely reading this block, or recording the `position-management` lifecycle event, does not authorize any work in it. Do not run a DAILY-LOSS clock, reserve or stage a source, call a broker or helper, or perform daily-loss/stop-count work until FIRST has completed its positions census, portfolio read, profit-taking, stop-coverage audit/repairs, and dust handling; every PRE-SECOND gate remains entry-eligible; and the SECOND phase-entry renewal has succeeded.
 
 Robinhood's realized P&L is measured against each position's lifetime tax cost, so it is NOT a daily-loss measure. An overnight winner can sell below yesterday's close — a loss today — while `get_realized_pnl` reports a profit. The circuit breaker's SOLE authority is therefore `daily_loss.py`, which reconstructs true equity mark-to-market P&L for START CLOCK's Eastern broker date from current positions, split-adjusted prior closes, and every execution that occurred today. It uses exact decimals and includes execution fees. Never add cost-basis realized P&L to cost-basis unrealized P&L, never calculate a substitute in prose, and never use `trade-ledger.csv` or an earlier status snapshot for this decision.
@@ -1296,7 +1307,7 @@ Uppercase `A` and `B` are generation values ONLY for `broker_snapshot.py --gener
 ```javascript
 const runSnapshotJsonCommand = async command => {
   const args = {
-    cmd: command,
+    cmd: isWindows ? command + "\nexit $LASTEXITCODE" : command,
     workdir: projectRoot,
     yield_time_ms: 30000,
     max_output_tokens: 12000
@@ -1741,7 +1752,7 @@ Run the following steps for generation A:
 
 1. Re-fetch every page of `get_equity_positions` and every page of `get_equity_orders`; validate each committed response through the deterministic page contract, immediately stage it under this generation's unique DISCOVERY prefix using only that receipt's `complete`, and use only its `next_cursor` for the next call. Then use a proved terminal singleton directly or aggregate-seal only a multi-page set as specified above. Do not fetch or stage a DISCOVERY portfolio: symbol discovery derives its exact quote set only from positions and executions, and `daily_loss.py --symbols-out` rejects the calculation-only `--portfolio`, `--quotes`, and `--halt-pct` options. The authoritative portfolio is still fetched fresh in the separate FINAL set at item 5. For orders, use NO `created_at_gte`, `state`, `symbol`, or `placed_agent` filter — pass only the account number on the first request and the helper-returned cursor on later pages. An old GTC order created days ago can fill today, a cancelled-rest order can contain a partial execution, and manual/app activity changes the same account-wide loss. Follow the helper-returned `next_cursor` until it is null. Missing, failed, malformed, skipped, unstaged, or incomplete pagination fails this entire generation.
 2. Immediately after those discovery sets are staged and sealed, run `market_clock.py --json --expected-constants-sha256 <preflight source_sha256>` for the DAILY-LOSS DISCOVERY reading. Require valid `utc` and `date_et`, and require this `date_et` to equal START CLOCK's `date_et`; otherwise the breaker is INDETERMINATE. A constants hash/validation failure remains a FULL-RUN CONFIGURATION HALT.
-3. Ask the helper for the exact quote set — Windows/PowerShell: `py -3 daily_loss.py --positions <sealed discovery position-page files> --orders <sealed discovery order-page files> --snapshot-generation <A|B> --trading-date <START date_et> --stop-date-pt <START date_pt> --as-of-utc <DAILY-LOSS DISCOVERY utc> --symbols-out <scratch>/daily-loss-<generation>-symbols.json --failure-json`; Linux/macOS: the same command with `python3`. Pass the generation being executed exactly. Codex runs this command through `runSnapshotJsonCommand` and binds a nonzero result through `bindDailyLossCommandFailure` before attempting the success recipe below; a non-Codex runner uses the single-shape fully drained native equivalent defined above and enforces the same receipts. Discovery returns only the exact quote-symbol/time binding; it never supplies the stop-count guard verdict. The atomically written symbols file is an audit artifact only: NEVER read it with a file tool, shell command, `Get-Content`, or second Python command. Use only the bound receipt's frozen `symbols` array (or the non-Codex runner's immutable equivalent). Fetch `get_equity_quotes` for exactly those symbols in batches of at most 20 (the connector omits official closes above 20), immediately stage every response with that generation, use one proved terminal batch directly, and aggregate-seal only when there are multiple quote batches. An empty bound symbol array requires no quote call.
+3. Ask the helper for the exact quote set — Windows/PowerShell: `& '<PYTHON_EXE>' daily_loss.py --positions <sealed discovery position-page files> --orders <sealed discovery order-page files> --snapshot-generation <A|B> --trading-date <START date_et> --stop-date-pt <START date_pt> --as-of-utc <DAILY-LOSS DISCOVERY utc> --symbols-out <scratch>/daily-loss-<generation>-symbols.json --failure-json`; Linux/macOS: the same retained absolute `PYTHON_EXE` without the leading `&`. Pass the generation being executed exactly. Codex runs this command through `runSnapshotJsonCommand` and binds a nonzero result through `bindDailyLossCommandFailure` before attempting the success recipe below; a non-Codex runner uses the single-shape fully drained native equivalent defined above and enforces the same receipts. Discovery returns only the exact quote-symbol/time binding; it never supplies the stop-count guard verdict. The atomically written symbols file is an audit artifact only: NEVER read it with a file tool, shell command, `Get-Content`, or second Python command. Use only the bound receipt's frozen `symbols` array (or the non-Codex runner's immutable equivalent). Fetch `get_equity_quotes` for exactly those symbols in batches of at most 20 (the connector omits official closes above 20), immediately stage every response with that generation, use one proved terminal batch directly, and aggregate-seal only when there are multiple quote batches. An empty bound symbol array requires no quote call.
 
 A nonempty bound discovery `symbols` array is normal, including for a currently flat account,
 because same-day executions can still require marks for the daily-loss reconstruction. It is
@@ -1803,7 +1814,7 @@ const requiredQuoteSymbols = symbolBinding.symbols;
 5. Now re-fetch `get_portfolio`, every page of `get_equity_positions`, and every unfiltered page of `get_equity_orders` into a separate generation-specific FINAL set, immediately staging every response and aggregate-sealing position/order pages exactly as in item 1. The FINAL clock is deliberately just before this verification snapshot: an execution that happens during these calls has a timestamp later than the cutoff and makes the helper fail closed; an execution that happened during quote collection is included. Never evaluate with the earlier discovery files. If the account changed enough that the final required quote set differs, the helper's missing/unexpected-symbol check fails this generation instead of mixing snapshots.
 6. Run the authoritative lifecycle-bound evaluation using ONLY this generation's sealed inputs and the exact private SECOND state. Windows/PowerShell: `& '<PYTHON_EXE>' daily_loss.py --portfolio <sealed FINAL portfolio file> --positions <all sealed FINAL position-page files> --orders <all sealed FINAL order-page files> --quotes <all sealed quote-batch files, omit this option when the discovery symbol array is empty> --snapshot-generation <A|B> --trading-date <START date_et> --stop-date-pt <START date_pt> --as-of-utc <DAILY-LOSS FINAL utc> --expected-constants-sha256 <startup constants_receipt.source_sha256> --invocation-id <INVOCATION_ID> --run-token <private exact RUN_LOCK_TOKEN> --json-out <exact bound scratch>/daily-loss-<a|b>.json --failure-json`; POSIX-style shell: the same retained absolute `PYTHON_EXE` without `&`. Do **not** pass `--halt-pct` in lifecycle calculation mode. The checked-in helper revalidates the pinned constants hash and derives both `DAILY_LOSS_HALT_PCT` and `STOP_COUNT_HALT` itself.
 
-   Begin the composed calculation cell with the CODEX LATER TOKEN PRECONDITION and require the already-bound `second_entry_receipt`; load the invocation, token, scratch, startup hash, and thresholds only from those private/machine receipts. Pass the exact generation-specific output basename: `daily-loss-a.json` for A or `daily-loss-b.json` for B. Construct the command exactly once from a frozen array of already-bound segments: `const evaluationCommandParts = Object.freeze([<launcher/script segment>, <portfolio segment>, ...positionSegments, ...orderSegments, ...quoteSegments, <generation/date/as-of/constants/invocation/private-token/output/failure segment>]); const evaluationCommand = evaluationCommandParts.join("");`. Each repeated path segment is created with `.map(path => " --<kind> " + quote(path))` before freezing. Never append, prepend, reassign, or otherwise mutate `evaluationCommand` or its parts after declaration; conditional quote omission is represented only by an empty frozen `quoteSegments` array. The token segment may mechanically quote only the just-loaded `lease.run_lock_token`, and no output, narration, durable evidence, or non-private state may contain it.
+   Begin the composed calculation cell with the CODEX LATER TOKEN PRECONDITION and require the already-bound `second_entry_receipt`; load the invocation, token, scratch, startup hash, and thresholds only from those private/machine receipts. Pass the exact generation-specific output basename: `daily-loss-a.json` for A or `daily-loss-b.json` for B. Construct the command exactly once from a frozen array of already-bound segments: `const evaluationCommandParts = Object.freeze([<launcher/script segment>, <portfolio segment>, ...positionSegments, ...orderSegments, ...quoteSegments, <generation/date/as-of/constants/invocation/private-token/output/failure segment>]); const evaluationCommand = evaluationCommandParts.join("");`. For each kind, emit exactly one option followed by every ordered path: `Object.freeze([" --positions", ...finalPositions.map(path => " " + quote(path))])`, with the equivalent `--orders` array and, only for nonempty quotes, `--quotes`. Repeating a kind option would let argparse discard earlier operands. Apply the same single-option grouping to discovery. Never append, prepend, reassign, or otherwise mutate `evaluationCommand` or its parts after declaration; conditional quote omission is represented only by an empty frozen `quoteSegments` array. The token segment may mechanically quote only the just-loaded `lease.run_lock_token`, and no output, narration, durable evidence, or non-private state may contain it.
 
    Bind a nonzero result through `bindDailyLossCommandFailure` before attempting the success binder. Exit zero is authoritative proof that the helper no-clobber published and read back the evidence wrapper, independently recomputed it from the exact sealed inputs, owner-fenced renewed the lease, and recorded the combined SECOND checkpoint before emitting stdout. Durable `<scratch>/daily-loss-<a|b>.json` and stdout are the same wrapper object. Require exactly these top-level fields: `schema_version`, `action`, `ok`, `mode`, `generation`, `invocation_id`, `constants_sha256`, `daily_loss_halt_pct`, `stop_count_halt`, `daily_loss_tripped`, `stop_count_tripped`, `entry_guard_outcome`, and `result`. Require schema 1, action `daily-loss`, `ok: true`, mode `calculation`, the exact generation and invocation, the startup hash, the exact startup `DAILY_LOSS_HALT_PCT` string and integer `STOP_COUNT_HALT`, both trip fields as JSON booleans, and `entry_guard_outcome` exactly `tripped` when either Boolean is true and otherwise `clear`. The nested `result` remains the complete deterministic daily-loss/stop-count receipt: require its schema, START/FINAL date and cutoff bindings, `stop_count_date_pt` exactly equal to START CLOCK's `date_pt`, status/`halt_new_buys` consistency, nonnegative integer `stop_fills_today`, sorted unique nonempty `stopped_out_symbols`, and `daily_loss_tripped === result.halt_new_buys`. Store and consume the complete parsed wrapper unchanged; the runner never selects or records its clear/tripped checkpoint.
 
@@ -1957,7 +1968,7 @@ When ANY pre-SECOND gate skips entry, do NOT run SECOND, do NOT capture/stage a 
 **SECOND — circuit breaker check** (remove if the DAILY-LOSS CIRCUIT BREAKER block above is deleted).
 **SECOND phase-entry fence:** require `FIRST_COMPLETE`; then, before any SECOND clock, broker, staging, or guard work, invoke the exact owner-fenced `run_lifecycle.py enter-second` operation below with the retained `PYTHON_EXE`, exact private `RUN_LOCK_TOKEN`, exact helper-issued scratch, and startup constants hash. This one checked-in action validates active context, renews the lease, revalidates and binds the exact scratch/source-root identities plus `DAILY_LOSS_HALT_PCT` and `STOP_COUNT_HALT`, and atomically records entry eligibility plus the DAILY-LOSS attempt. The FIRST renewal does not satisfy SECOND. Never issue a standalone SECOND `run_lock.py renew`, a separate model-authored DAILY-LOSS marker, or a free-form lifecycle event.
 
-**CODEX ENTER SECOND — EXACT OWNER-FENCED CELL:** this is the first local operation after every pre-SECOND gate remains eligible. It loads the opaque token only from private state, and every command operand is mechanically carried from the same invocation's stored receipts. No token appears in output or non-private state.
+**CODEX ENTER SECOND — EXACT OWNER-FENCED CELL:** this is the first composed operation after every pre-SECOND gate remains eligible. Before recording an attempt it loads and compiles the fixed repository driver through the retained Python, then binds `enter-second` and awaits the complete driver with no model-visible boundary between them. It loads the opaque token only from private state, and every command operand is mechanically carried from the same invocation's stored receipts. No token appears in output or non-private state.
 
 ```javascript
 {
@@ -1991,16 +2002,47 @@ const isWindows = /^[A-Za-z]:[\\/]/.test(pythonExe);
 const psq = value => "'" + String(value).replaceAll("'", "''") + "'";
 const shq = value => "'" + String(value).replaceAll("'", "'\"'\"'") + "'";
 const quote = isWindows ? psq : shq;
-const drainCommand = async initial => {
+const drainCommand = async (initial, maxOutputTokens = 2000) => {
   let process = initial;
   let output = String(process.output ?? "");
   while (process.session_id !== undefined) {
-    const next = await tools.write_stdin({session_id: process.session_id, chars: "", yield_time_ms: 30000, max_output_tokens: 2000});
+    const next = await tools.write_stdin({session_id: process.session_id, chars: "", yield_time_ms: 30000, max_output_tokens: maxOutputTokens});
     output += String(next.output ?? "");
     process = next;
   }
   return Object.freeze({...process, output});
 };
+// Load repository code before recording the SECOND attempt. Source stays inside
+// this operation; the model never copies it or supplies callback implementations.
+const driverLoadArgs = {
+  cmd: (isWindows ? "& " : "") + quote(pythonExe) +
+    " daily_loss_orchestration.py --emit-javascript",
+  workdir: state.project_root, yield_time_ms: 30000, max_output_tokens: 60000
+};
+if (isWindows) driverLoadArgs.shell = "powershell.exe";
+const driverLoadProcess = await drainCommand(await tools.exec_command(driverLoadArgs), 60000);
+let driverSource = null;
+try { driverSource = JSON.parse(driverLoadProcess.output); } catch {}
+if (driverLoadProcess.exit_code !== 0 || !driverSource ||
+    driverSource.schema_version !== 1 ||
+    driverSource.action !== "load-daily-loss-orchestration" || driverSource.ok !== true ||
+    typeof driverSource.source !== "string" || driverSource.source.length === 0 ||
+    !/^[0-9a-f]{64}$/.test(driverSource.source_sha256) ||
+    !bootstrap.start_clock || bootstrap.start_clock.schema_version !== 1 ||
+    typeof bootstrap.start_clock.date_et !== "string" ||
+    typeof bootstrap.start_clock.date_pt !== "string" ||
+    bootstrap.start_clock.constants_sha256 !== constantsReceipt.source_sha256) {
+  text(JSON.stringify({schema_version: 1, action: "daily-loss-driver-load-failed", ok: false}));
+  exit();
+}
+let runDailyLoss;
+try {
+  runDailyLoss = new Function('"use strict"; return (' + driverSource.source + '\n);')();
+  if (typeof runDailyLoss !== "function") throw new Error("daily-loss driver is not callable");
+} catch (ignored) {
+  text(JSON.stringify({schema_version: 1, action: "daily-loss-driver-load-failed", ok: false}));
+  exit();
+}
 const command = (isWindows ? "& " : "") + quote(pythonExe) +
   " run_lifecycle.py enter-second --invocation-id " + quote(invocationId) +
   " --run-token " + quote(lease.run_lock_token) +
@@ -2027,11 +2069,14 @@ if (process.exit_code !== 0 || !receipt || receipt.schema_version !== 1 ||
   exit();
 }
 store(STATE_KEY, {...state, second_entry_receipt: receipt});
-text(JSON.stringify({schema_version: 1, action: "enter-second-state-bound", ok: true}));
+const dailyLossOutcome = await runDailyLoss({tools, allTools: ALL_TOOLS, load, store});
+text(JSON.stringify(dailyLossOutcome));
 }
 ```
 
-3. Only after this exact `enter-second` receipt is bound, execute the DAILY-LOSS CIRCUIT BREAKER block above. Its lifecycle-bound calculation mode owns both the daily-loss and stop-count comparison and records the combined clear/tripped checkpoint from deterministic durable evidence; the runner never chooses that checkpoint. If `daily_loss_tripped` is true, use `risk-halt` / `daily-loss-tripped`. Otherwise, if `stop_count_tripped` is true, use `risk-halt` / `stop-count-tripped`. Thus daily loss has deterministic precedence when both are true, matching the existing guard order. Either trip halts new buys and goes to the report. A staging or snapshot terminal in this eligible path remains a real snapshot failure; never relabel or hide it as a session skip.
+3. Only after this exact `enter-second` receipt is bound, execute the DAILY-LOSS CIRCUIT BREAKER block above. In Codex the same cell already performs that entire block through the checked-in driver: consume its bound `daily_loss_receipt` and compact `daily_loss_orchestration` outcome without repeating any snapshot work. Its lifecycle-bound calculation mode owns both the daily-loss and stop-count comparison and records the combined clear/tripped checkpoint from deterministic durable evidence; the runner never chooses that checkpoint. If `daily_loss_tripped` is true, use `risk-halt` / `daily-loss-tripped`. Otherwise, if `stop_count_tripped` is true, use `risk-halt` / `stop-count-tripped`. Thus daily loss has deterministic precedence when both are true, matching the existing guard order. Either trip halts new buys and goes to the report. A staging or snapshot terminal in this eligible path remains a real snapshot failure; never relabel or hide it as a session skip.
+
+For a failed driver outcome, use its exact `classification`, `reason_code`, and fixed `failure` stage in the recovery diagnostic. Never invent a generic explanation that hides which operation failed. A driver-bound `second_completion_receipt` is the completed public terminal; do not call it again. `checkpoint_uncertain: true` follows the calculation uncertainty rule above: no broker calls, no guessed public terminal, and no normal successful finalization. Missing/invalid driver output is coordination uncertainty, never evidence of a snapshot or financial loss. Loading/compiling the module before `enter-second` fails closed before any new SECOND attempt or broker call.
 
 **PUBLIC FAIL-CLOSED SECOND COMPLETION — EXACT:** only when an actually attempted SECOND helper/connector operation reaches a prescribed terminal path without a successful lifecycle-bound calculation receipt, call `run_lifecycle.py complete-second --invocation-id <ID> --run-token <private token> --outcome <typed outcome>` through the same private-token and drained-command discipline. The only public outcomes are `snapshot-terminal` for a terminal SECOND snapshot/transport path and `coordination-terminal` for a terminal SECOND local/orchestration path. The parser does not accept `clear` or `tripped`; only `daily_loss.py` may derive and record those from its deterministic result. Require exit zero and the exact success fields `schema_version`, `action`, `ok`, `invocation_id`, `phase`, `outcome`, `recorded`, `sequence`, and `lease_renewed`; require action `complete-second`, the same invocation, phase `daily-loss`, the exact requested terminal outcome, Boolean `recorded`, positive integer `sequence`, and `lease_renewed: true`. Store that complete token-free receipt unchanged as `second_completion_receipt`. Never call this command after a successful calculation receipt, never substitute one terminal outcome for another, and never leave DAILY-LOSS without one of those checked-in terminal bindings. The narrow `release-finish` coordination fallback exists only so an omitted terminal call cannot strand an owned lifecycle; it records the fail-closed orchestration outcome, not successful compliance, and cannot substitute for this required operation or justify a snapshot label.
 
@@ -2177,13 +2222,79 @@ text(JSON.stringify({schema_version: 1, action: "working-list-state-bound", ok: 
 
 9. Fetch RSI only for the PRE-RSI LIST. The script has already decided liquidity, recent high, dip percentage, and spread; do not recompute any of them. Re-checking held/open-order/sold-this-run/cooldown state remains a broker-state overlay, never a replacement for a script verdict.
 
-10. **RSI curl-up gate (final AND condition — blocks falling knives):** for each PRE-RSI candidate, call `get_equity_technical_indicators` (type `rsi`, interval `RSI_INTERVAL`, period `RSI_PERIOD`, output `last:<RSI_LOOKBACK_BARS + 1>`, start_time ~3 trading days back; one call per name). Reserve a unique `rsi-0`, `rsi-1`, ... purpose before each call and, after explicit success, commit the COMPLETE result UNMODIFIED. Never extract `series`, re-key a symbol, or build a combined map. The evaluator unwraps the standard MCP envelope, reads `data.symbol`, validates the RSI series, and rejects malformed/error envelopes or duplicate symbols.
+10. **RSI curl-up gate (final AND condition — blocks falling knives):** execute the exact Codex continuation below after the valid PRE-RSI handoff. It owns request planning, every RSI read, the immediate identical retry, exact-reservation abort on exhaustion, successful response persistence, and the final evaluator pass in one operation. The reference protocol following the cell is not extra work after it returns. Never assemble an indicator payload or substitute a model-written save/retry callback.
+
+**CODEX RSI + FINAL EVALUATION — EXACT EXECUTABLE CELL:** load the fixed repository module into the current operation, then await its entire continuation. The driver obtains one fresh RSI request clock through `market_clock.py --json` with the startup constants hash; require the same Eastern date as START CLOCK. This reading bounds indicator requests only and never changes START CLOCK or the entry-session verdict. `rsi_orchestration.py --plan` consumes the fixed helper-owned `<scratch>/pre-rsi-gates.json`, validates its input lists and parameters against the pinned constants, and constructs complete requests with required `start_time`, pinned `end_time`, interval, period, output count, regular bounds, and split adjustment. Carry those complete request objects unchanged; never calculate a lookback or omit a required field.
+
+```javascript
+{
+const BOOTSTRAP_KEY = "rhmra.bootstrap-state.v1";
+const STATE_KEY = "rhmra.transport-state.v1";
+const LEASE_KEY = "rhmra.lease-state.v1";
+const bootstrap = load(BOOTSTRAP_KEY);
+const state = load(STATE_KEY);
+const lease = load(LEASE_KEY);
+const invocationId = state && state.lease_binding && state.lease_binding.invocation_id;
+if (!bootstrap || bootstrap.schema_version !== 1 || bootstrap.phase !== "context-bound" ||
+    !bootstrap.resolver_receipt || !state || state.schema_version !== 1 ||
+    state.phase !== "transport-bound" || typeof state.python_exe !== "string" ||
+    state.python_exe !== bootstrap.resolver_receipt.python ||
+    typeof state.project_root !== "string" || !state.context_receipt ||
+    state.context_receipt.invocation_id !== invocationId ||
+    !lease || lease.schema_version !== 1 || lease.phase !== "lease-owned" ||
+    typeof invocationId !== "string" || invocationId.length === 0 ||
+    lease.invocation_id !== invocationId ||
+    typeof lease.run_lock_token !== "string" || lease.run_lock_token.length === 0) {
+  text(JSON.stringify({schema_version: 1, action: "rsi-driver-state-failed", ok: false}));
+  exit();
+}
+const pythonExe = state.python_exe;
+const isWindows = /^[A-Za-z]:[\\/]/.test(pythonExe);
+const psq = value => "'" + String(value).replaceAll("'", "''") + "'";
+const shq = value => "'" + String(value).replaceAll("'", "'\"'\"'") + "'";
+const quote = isWindows ? psq : shq;
+const args = {cmd: (isWindows ? "& " : "") + quote(pythonExe) +
+  " rsi_orchestration.py --emit-javascript", workdir: state.project_root,
+  yield_time_ms: 30000, max_output_tokens: 60000};
+if (isWindows) args.shell = "powershell.exe";
+let process = await tools.exec_command(args);
+let output = String(process.output ?? "");
+while (process.session_id !== undefined) {
+  const next = await tools.write_stdin({session_id: process.session_id, chars: "",
+    yield_time_ms: 30000, max_output_tokens: 60000});
+  output += String(next.output ?? "");
+  process = next;
+}
+let driverSource = null;
+try { driverSource = JSON.parse(output); } catch {}
+if (process.exit_code !== 0 || !driverSource || driverSource.schema_version !== 1 ||
+    driverSource.action !== "load-rsi-orchestration" || driverSource.ok !== true ||
+    typeof driverSource.source !== "string" || driverSource.source.length === 0 ||
+    !/^[0-9a-f]{64}$/.test(driverSource.source_sha256)) {
+  text(JSON.stringify({schema_version: 1, action: "rsi-driver-load-failed", ok: false}));
+  exit();
+}
+let runRsi;
+try {
+  runRsi = new Function('"use strict"; return (' + driverSource.source + '\n);')();
+  if (typeof runRsi !== "function") throw new Error("RSI driver is not callable");
+} catch (ignored) {
+  text(JSON.stringify({schema_version: 1, action: "rsi-driver-load-failed", ok: false}));
+  exit();
+}
+text(JSON.stringify(await runRsi({tools, allTools: ALL_TOOLS, load, store})));
+}
+```
+
+The driver keeps its no-replay fence at `rhmra.rsi-execution.v1`. If this operation yields, wait for that same cell; never run the cell or module again. Its complete `final_gate_receipt` and compact `rsi_orchestration` outcome stay in transport state. Consume that final receipt directly; do not rerun the evaluator or read its file again. Cleanly exhausted indicator reads block only their names and leave `final_refresh_allowed: true`: proceed through the mandatory REPORT refresh, never label the final snapshot unavailable merely because an RSI request failed. An uncertain reserve/save/commit/abort still stops broker work; do not clear the journal or reconstruct a reservation ID.
+
+**Equivalent RSI protocol:** for each PRE-RSI candidate, use the complete helper-planned `get_equity_technical_indicators` arguments. Reserve a unique `rsi-0`, `rsi-1`, ... purpose before each call and, after explicit success, commit the COMPLETE result UNMODIFIED. Never extract `series`, re-key a symbol, or build a combined map. The evaluator unwraps the standard MCP envelope, reads `data.symbol`, validates the RSI series, and rejects malformed/error envelopes or duplicate symbols. The strict final pass binds the returned period, interval, regular bounds, and strictly increasing timestamps to the requested time window.
 
    If an indicator read explicitly exhausts the one-retry policy, abort its reservation and omit that name; the deterministic missing-RSI gate BLOCKS it. Do not fetch historicals, derive closes/RSI, or repair a malformed committed success. If the PRE-RSI LIST is empty—or no RSI purpose committed—commit fixed purpose `rsi-empty` containing exactly `{}` so the final RSI-enabled pass still runs.
 
-   Then RE-RUN with `& '<PYTHON_EXE>' evaluate_candidates.py --scratch '<absolute scratch>'` and the SAME `--bars-purpose`, `--quotes-purpose`, `--expected-symbols`, and constant flags as the PRE-RSI pass plus one `--rsi-purpose <every committed rsi-* purpose exactly once> --rsi-oversold <RSI_OVERSOLD> --rsi-lookback-bars <RSI_LOOKBACK_BARS> --rsi-confirm-bars <RSI_CONFIRM_BARS> --rsi-max-entry <RSI_MAX_ENTRY> --json-out run-reports/<EXPECTED_GATE_FILE>`; use only the retained `PYTHON_EXE`, never pass an aborted purpose, and use the lifecycle-bound exact bare `EXPECTED_GATE_FILE`; never rebuild it from current time, another clock, or a context summary.
+   Then RE-RUN with `& '<PYTHON_EXE>' evaluate_candidates.py --scratch '<absolute scratch>'` and the SAME `--bars-purpose`, `--quotes-purpose`, `--expected-symbols`, and constant flags as the PRE-RSI pass plus one `--rsi-purpose <every committed rsi-* purpose exactly once> --rsi-oversold <RSI_OVERSOLD> --rsi-lookback-bars <RSI_LOOKBACK_BARS> --rsi-confirm-bars <RSI_CONFIRM_BARS> --rsi-max-entry <RSI_MAX_ENTRY> --rsi-interval <planned interval> --rsi-start-time <planned start_time> --rsi-as-of-utc <planned as_of_utc> --rsi-request-symbols <ordered symbols for committed RSI responses; omit for rsi-empty> --emit-json --json-out run-reports/<EXPECTED_GATE_FILE>`; use only the retained `PYTHON_EXE`, never pass an aborted purpose, and use the lifecycle-bound exact bare `EXPECTED_GATE_FILE`; never rebuild it from current time, another clock, or a context summary.
 
-   **FINAL machine-readable handoff and gate record (REQUIRED):** only after that final command exits successfully, read its JSON output. Apply the same root, parameter, symbol, type, finiteness, and completeness checks as the PRE-RSI handoff, except `rsi_gate_enabled` must be exactly the JSON boolean `true` and `params` must match every RSI constant plus the exact ordered RSI purpose list supplied. A row may reach Step 11 only when its final `buy_candidate` is exactly `true`, `rsi_gate` is exactly `"pass"`, and `insufficient_history` is exactly `false`. The final JSON's unrounded measurements, verdicts, and reason strings are the SOLE authority for Step 11 and the report; stdout remains diagnostic-only.
+   **FINAL machine-readable handoff and gate record (REQUIRED):** only after that final command exits successfully, consume the complete JSON receipt from `--emit-json`, which matches the persisted gate record; do not make another file read. Apply the same root, parameter, symbol, type, finiteness, and completeness checks as the PRE-RSI handoff, except `rsi_gate_enabled` must be exactly the JSON boolean `true` and `params` must match every RSI constant plus the exact ordered RSI purpose list supplied. A row may reach Step 11 only when its final `buy_candidate` is exactly `true`, `rsi_gate` is exactly `"pass"`, and `insufficient_history` is exactly `false`. The final JSON's unrounded measurements, verdicts, and reason strings are the SOLE authority for Step 11 and the report; The ordinary table mode remains diagnostic-only; only `--emit-json` is the machine-readable receipt.
 
    If the final command fails, its output is missing/unreadable/non-JSON, `rsi_gate_enabled` is not `true`, an expected symbol is absent, or any schema/value/parameter check fails, set `entry_phase: "halted"`, skip Steps 11–12, and report `final candidate evaluation handoff failure`. NEVER buy from the PRE-RSI JSON, formatted stdout, a prior gate file, or ad-hoc math.
 
@@ -2366,7 +2477,7 @@ The sole absence code that permits a candidate rewrite is `status_snapshot_missi
 
 **FIXED FINALIZATION ORDER — no discovery or reordering:** write the exact lifecycle-bound report, read it back, publish/verify the exact lifecycle-bound status when available, call owner-fenced `release-finish` exactly once (or the permitted raw `finish` only on a pre-lease/proven-lease-lost path), then call `record-internal` exactly once as the final tool call. `status_snapshot.py` enforces that the report already exists and is a nonempty strict-UTF-8 read-back before status publication. Never run a helper with `--help`, inspect helper source to rediscover syntax, publish status before the report, write any run artifact after release, split owned release from finish, or call a memory tool before or after telemetry. Use only the exact commands printed in this routine.
 
-In Codex, use the exact final orchestration below. It accepts only a token-free `lease-released` or `lease-lost` tombstone, machine-loads the lifecycle-bound report name before telemetry, attempts `record-internal`, and must clear all three fixed slots—`rhmra.transport-state.v1`, `rhmra.bootstrap-state.v1`, and `rhmra.lease-state.v1`—with `store(key, null)` only after the nested helper completes or its attempt throws, before emitting one compact final-summary handoff. A terminal path that does not reach `record-internal` clears all three slots in its last orchestration only after all permitted report/status work, lease release (or proven ownership loss), and lifecycle finish are complete. Never clear any slot while a broker call, handoff, reconciliation, status publication, release, or finalization still depends on it. A live/malformed lease state is not permission to clear the raw token or run telemetry: stop before this cell and complete the prescribed release/loss path. This executor-local cleanup is not a new helper/tool call and must not change the fixed finalization order.
+In Codex, use the exact final orchestration below. It accepts only a token-free `lease-released` or `lease-lost` tombstone, machine-loads the lifecycle-bound report name before telemetry, attempts `record-internal`, and must clear all five fixed slots—`rhmra.transport-state.v1`, `rhmra.bootstrap-state.v1`, `rhmra.lease-state.v1`, `rhmra.daily-loss-execution.v1`, and `rhmra.rsi-execution.v1`—with `store(key, null)` only after the nested helper completes or its attempt throws, before emitting one compact final-summary handoff. A terminal path that does not reach `record-internal` clears all five slots in its last orchestration only after all permitted report/status work, lease release (or proven ownership loss), and lifecycle finish are complete. Never clear any slot while a broker call, handoff, reconciliation, status publication, release, or finalization still depends on it. A live/malformed lease state is not permission to clear the raw token or run telemetry: stop before this cell and complete the prescribed release/loss path. This executor-local cleanup is not a new helper/tool call and must not change the fixed finalization order.
 
 ### PERFORMANCE TELEMETRY — after lifecycle terminalization, never authoritative
 
@@ -2376,13 +2487,15 @@ Only after all permitted report/status persistence and read-back plus one succes
 
 **CODEX FINAL TELEMETRY + REPORT POINTER — EXACT:** this one `functions.exec` cell is the final tool operation of a normally reported Codex run. Substitute only the already-bound unchanged START CLOCK `session` in the one marked string; every launcher, invocation, project, run-start, and report-name value is loaded from executor state. The report name is validated, never constructed. The cell deliberately machine-returns that same name even when telemetry fails. `recordInternalResult` is the fully drained result of the sole nested command:
 
-After the single successful lifecycle terminalization, do not author or run a separate cleanup/finalization cell. The exact cell below is the only remaining tool operation, and its first executable statements declare `BOOTSTRAP_KEY`, `LEASE_KEY`, and `STATE_KEY` inside the same lexical block that later loads and clears them. Never reference any of those identifiers from another block, omit a declaration, move a `store(...)` outside this block, or replay `release-finish`/`finish` because telemetry or cleanup failed.
+After the single successful lifecycle terminalization, do not author or run a separate cleanup/finalization cell. The exact cell below is the only remaining tool operation, and its first executable statements declare `BOOTSTRAP_KEY`, `LEASE_KEY`, `STATE_KEY`, `EXECUTION_KEY`, and `RSI_EXECUTION_KEY` inside the same lexical block that later loads and clears them. Never reference any of those identifiers from another block, omit a declaration, move a `store(...)` outside this block, or replay `release-finish`/`finish` because telemetry or cleanup failed.
 
 ```javascript
 {
 const BOOTSTRAP_KEY = "rhmra.bootstrap-state.v1";
 const LEASE_KEY = "rhmra.lease-state.v1";
 const STATE_KEY = "rhmra.transport-state.v1";
+const EXECUTION_KEY = "rhmra.daily-loss-execution.v1";
+const RSI_EXECUTION_KEY = "rhmra.rsi-execution.v1";
 const bootstrap = load(BOOTSTRAP_KEY);
 const state = load(STATE_KEY);
 const lease = load(LEASE_KEY);
@@ -2465,7 +2578,7 @@ try {
     typeof receipt.estimated_run_total_display === "string" &&
     receipt.estimated_run_total_display.length > 0 &&
     receipt.estimate_clock_source === "final-summary-boundary";
-  telemetryOk = recordInternalResult.exit_code === 0 && receipt &&
+  telemetryOk = recordInternalResult.exit_code === 0 && receipt !== null &&
     receipt.schema_version === 1 && receipt.action === "record-internal" &&
     receipt.ok === true && receipt.invocation_id === invocationId && estimatesValid;
   timingUnavailable = recordInternalResult.exit_code !== 0
@@ -2491,11 +2604,13 @@ if (telemetryOk) {
 store(STATE_KEY, null);
 store(BOOTSTRAP_KEY, null);
 store(LEASE_KEY, null);
+store(EXECUTION_KEY, null);
+store(RSI_EXECUTION_KEY, null);
 text(JSON.stringify(handoff));
 }
 ```
 
-Do not add `Object.keys`, an expected-key array, a second timing call, or a fallback report name to this cell. If the nested helper is nonzero, throws, returns non-JSON, or fails the permitted core/estimate checks, the cell still emits `telemetry_ok: false`, its bounded `timing_unavailable`, and the exact machine-loaded `expected_report_file` after clearing all three terminal state slots. A non-Codex runner must make the equivalent report binding survive telemetry failure and must take the closing filename only from that binding, not from memory or a clock.
+Do not add `Object.keys`, an expected-key array, a second timing call, or a fallback report name to this cell. If the nested helper is nonzero, throws, returns non-JSON, or fails the permitted core/estimate checks, the cell still emits `telemetry_ok: false`, its bounded `timing_unavailable`, and the exact machine-loaded `expected_report_file` after clearing all five terminal state slots. A non-Codex runner must make the equivalent report binding survive telemetry failure and must take the closing filename only from that binding, not from memory or a clock.
 
 This telemetry is observational and non-authoritative: any missing helper, nonzero exit, malformed or invalid envelope, unavailable boundary, or persistence failure must never change trading, broker calls, saved report/status contents, lease handling, lifecycle classification/reason, or the run result. On telemetry failure, add only one concise `Timing unavailable: <diagnostic>` sentence to the final on-screen summary or halt text before the mandatory last output-file line when that line applies. The helper value is **Comparable run duration** because its documented START CLOCK and `final-summary-boundary` are identical on Claude and Codex. A later `observe-task` value from an explicit external or manual source is **Reference run duration** only: retain it as source-labelled fallback/context and never let it displace an available Comparable run duration. Fair performance comparisons require the same automatic boundary, session class, workload path, configuration cohort, and preferably rules version; runner/model identity is the explicit comparison dimension. Neither label claims scheduler-start or task-completion boundaries.
 

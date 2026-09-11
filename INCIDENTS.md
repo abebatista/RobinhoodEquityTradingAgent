@@ -2186,6 +2186,96 @@ this repair is the relevant next evidence. If Terra again omits the deterministi
 terminal call with the migration and atomic closure present, that recurrence is separate model
 instruction-following evidence and supports switching the scheduled candidate to Sol.
 
+## 2026-09-11 11:33 PT CODEX TERRA — DAILY-LOSS OMITTED AFTER SUCCESSFUL SECOND ENTRY
+
+**The post-repair run used `gpt-5.6-terra` with reasoning high and reached SECOND without
+a helper or connector failure.** Startup, the real-response transport binding, FIRST's
+zero-position census and portfolio normalization, and the owner-fenced `enter-second`
+operation all succeeded. The transcript returned `enter-second-state-bound` at 11:37:55 PT.
+After that success, the runner made no DAILY-LOSS broker snapshot, staging, discovery, or
+calculation call before choosing a coordination halt. There was no intervening failed
+operation to explain that choice: `daily_loss.py` was never invoked.
+
+The runner wrote a coordination report and successfully called `release-finish` at
+11:39:06 PT. The repaired attempted-SECOND coordination closure therefore worked, unlike
+the August 28 legacy-schema failure and stranded invocation. The terminal report records
+a halt rather than a successful trading run. No order was placed or cancelled, and the
+status snapshot was left unchanged. Successful closure preserves truthful state; it does
+not turn the omitted mandatory snapshot into completed work.
+
+**Disposition:** this is the repeated omission after migration and closure repair anticipated
+in the August 28 incident above. Inspection found the existing automation paused and
+configured for Terra high, with a matching Terra `TIMING_IDENTITY` declaration. The user
+explicitly retained Terra high rather than changing the execution model; no automation
+model or identity change was applied. The repair moves the complete DAILY-LOSS
+continuation into `tools/daily_loss_orchestration.js`, loaded by the fixed read-only
+`daily_loss_orchestration.py` helper inside the exact SECOND operation before phase entry.
+After successful `enter-second`, that same operation immediately awaits the driver;
+there is no model boundary at which the required snapshot can be omitted. The driver
+follows the existing reserve/read/save/commit/page/stage and A/B contracts and calls
+the existing Python calculation authority. An executor fence prevents replay, complete
+helper receipts stay machine-bound, and a failed outcome names the actual operation
+instead of replacing it with an unexplained coordination label. Offline broker fixtures
+exercise the complete continuation, including the flat-account path that failed here.
+This observation does not establish a Robinhood outage or a defect in the deterministic
+financial calculation, which did not run in the failed September 11 attempt.
+The documented supervised `DRY_RUN = true` acceptance and one eligible scheduled-run
+acceptance remain required before unattended live scheduling resumes.
+
+Reviewing the executable continuation also exposed an unobserved multi-page argument bug
+in the reference recipe: repeating argparse's `--positions`, `--orders`, or `--quotes`
+option keeps only the final group. The driver and recipe now pass one option per kind,
+followed by every ordered path. Synthetic multi-page integration verifies that all pages
+reach the unchanged deterministic helpers. This finding is separate from the September 11
+omission; that run never attempted discovery or calculation.
+
+## 2026-09-11 12:22 PT CODEX TERRA — RSI REQUEST OMITTED REQUIRED START TIME
+
+The repaired executable DAILY-LOSS path completed against Robinhood in this Terra high
+run. Both entry guards cleared, the filtered scan contained 15 names, and the pre-RSI
+evaluator selected CVV and FTFT. The next model-authored request supplied symbol, type,
+interval, period, and output count, but omitted the connector's required `start_time`.
+The save callback immediately threw on the returned error. It never made the prescribed
+identical retry and never aborted the reserved `rsi-0` source, leaving the journal pending.
+That unresolved handoff then prevented final evaluation and final status refresh. No order
+was reviewed, placed, or cancelled. The report lost the underlying connector detail and
+called the failure a generic RSI interruption.
+
+A read-only reproduction against Robinhood returned `-32602` with the exact missing
+property `start_time`. Complete requests for CVV and FTFT using the local 30-minute,
+period-14, last-six-bars configuration succeeded. This was a malformed request and an
+omitted recovery sequence, not evidence that the RSI service was unavailable.
+
+**Repair:** `rsi_orchestration.py` owns the calendar-aware request window, validated
+pre-RSI inputs, and complete indicator arguments. `tools/rsi_orchestration.js` executes
+the entire RSI and final-evaluator continuation: one reservation, at most two identical
+read attempts, exact-reservation-ID abort on explicit exhaustion, unchanged successful
+response persistence, and final evaluation using only committed RSI sources. All-failed
+or empty RSI input uses the existing `rsi-empty` rule and blocks candidates while allowing
+the mandatory final refresh. Uncertain saves, commits, or aborts remain fenced.
+
+The final evaluator's JSON-output mode returns its complete gate record directly, so
+the runner no longer reconstructs the final command or reads the result in another cell.
+The strict path checks response period, interval, bounds, requested symbol, and increasing
+timestamps within the planned window. The RSI execution fence is cleared only with the
+other terminal state slots. Synthetic integration covers the connector-error recovery
+and proves a final-refresh source can be committed afterward; live request/replay evidence
+is kept separate from any claim that a new unattended trading run completed.
+
+Real Windows helper integration also exposed PowerShell converting a native Python
+exit code of `2` to process exit code `1`. That hid the typed helper failures used by
+both RSI recovery and DAILY-LOSS generation-B authorization. The shared local-command
+wrapper and both executable continuations now explicitly return `$LASTEXITCODE` on
+Windows. A real-shell regression exercises a generation-A semantic failure, verifies
+its unchanged exit code and receipt, then completes generation B.
+
+The request planner proves the bound source root and absence of pending handoffs before
+reading the pre-RSI gate file. The final evaluator returns phase-specific machine errors:
+source-integrity or output failures fence further broker reads, while a cleanly committed
+but unusable indicator response can halt entry evaluation and still permit final refresh.
+Tests cover a missing pre-RSI file combined with a pending handoff and source tampering
+between the successful plan and final evaluation.
+
 ## The pattern across all of these
 
 Most of these are the same bug class: **the spec didn't say, so the agent improvised.** One

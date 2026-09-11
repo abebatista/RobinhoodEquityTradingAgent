@@ -66,8 +66,13 @@ pre-RSI pass from the final RSI-enforced gate record.
 """
 
 import argparse
+from contextlib import redirect_stderr, redirect_stdout
+from datetime import datetime, timezone
+import io
 import json
 import math
+import os
+import re
 import statistics
 import sys
 
@@ -370,7 +375,52 @@ def _rsi_series(value, period, context):
     )
 
 
-def load_rsi_map(documents, period):
+def _rsi_utc(value, context):
+    if not isinstance(value, str) or re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z", value) is None:
+        raise ValueError(f"{context}: expected a UTC timestamp ending in Z")
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+    except ValueError as exc:
+        raise ValueError(f"{context}: invalid UTC timestamp") from exc
+    if parsed.tzinfo is None or parsed.utcoffset().total_seconds() != 0:
+        raise ValueError(f"{context}: expected UTC")
+    return parsed.astimezone(timezone.utc)
+
+
+def _validate_rsi_response_binding(data, period, interval, start_time, as_of_utc, context):
+    """Bind complete broker RSI responses to the checked-in request window.
+
+    This validates metadata and chronology only. The existing RSI gate remains
+    the sole authority for sample sufficiency and threshold comparisons.
+    """
+    if not isinstance(data, dict) or data.get("interval") != interval or data.get("bounds") != "regular":
+        raise ValueError(f"{context}: RSI interval/bounds do not match the request")
+    indicators = data.get("indicators")
+    if not isinstance(indicators, list) or len(indicators) != 1 or not isinstance(indicators[0], dict):
+        raise ValueError(f"{context}: expected exactly one RSI indicator")
+    indicator = indicators[0]
+    params = indicator.get("params")
+    if (indicator.get("type") != "rsi" or not isinstance(params, dict)
+            or isinstance(params.get("period"), bool) or params.get("period") != period):
+        raise ValueError(f"{context}: RSI period/type do not match the request")
+    start = _rsi_utc(start_time, "RSI request start")
+    cutoff = _rsi_utc(as_of_utc, "RSI request end")
+    if start >= cutoff:
+        raise ValueError("RSI request window must increase")
+    series = indicator.get("series")
+    if not isinstance(series, list):
+        raise ValueError(f"{context}: expected an RSI series array")
+    previous = None
+    for index, item in enumerate(series):
+        if not isinstance(item, dict):
+            raise ValueError(f"{context}: RSI series requires timestamped values")
+        timestamp = _rsi_utc(item.get("begins_at"), f"{context}: RSI timestamp {index}")
+        if timestamp < start or timestamp > cutoff or (previous is not None and timestamp <= previous):
+            raise ValueError(f"{context}: RSI timestamps are outside the request window or not increasing")
+        previous = timestamp
+
+
+def load_rsi_map(documents, period, *, interval=None, start_time=None, as_of_utc=None, request_symbols=None):
     """Map SYMBOL -> ascending RSI values, merged across one or more files.
 
     Each file is EITHER a complete MCP envelope or raw
@@ -384,7 +434,18 @@ def load_rsi_map(documents, period):
     The raw-file form exists because hand-assembling the keyed map is exactly
     what produced a malformed-JSON run failure; see INCIDENTS.md."""
     out = {}
-    for path, original in documents:
+    strict = any(value is not None for value in (interval, start_time, as_of_utc))
+    if strict and not all(value is not None for value in (interval, start_time, as_of_utc)):
+        raise ValueError("RSI request binding requires interval, start time, and as-of UTC together")
+    if strict:
+        if request_symbols is None:
+            if len(documents) != 1 or documents[0][0] != "rsi-empty" or documents[0][1] != {}:
+                raise ValueError("bound RSI responses require request-symbol bindings")
+        elif (not isinstance(request_symbols, list) or len(request_symbols) != len(documents)
+              or any(not isinstance(symbol, str) or _rsi_symbol(symbol, "RSI request symbol") != symbol for symbol in request_symbols)
+              or len(set(request_symbols)) != len(request_symbols)):
+            raise ValueError("RSI request-symbol bindings must uniquely match the ordered sources")
+    for source_index, (path, original) in enumerate(documents):
         doc = unwrap_tool_result(original, path)
         if not isinstance(doc, dict):
             raise ValueError(
@@ -404,9 +465,15 @@ def load_rsi_map(documents, period):
             if "symbol" not in data:
                 raise ValueError(f"{path}: data.symbol: missing")
             symbol = _rsi_symbol(data["symbol"], f"{path}: data.symbol")
+            if strict:
+                if data["symbol"] != request_symbols[source_index]:
+                    raise ValueError(f"{path}: RSI response symbol does not match its request")
+                _validate_rsi_response_binding(data, period, interval, start_time, as_of_utc, path)
             series = _indicator_rsi_series(data, f"{path}: data")
             entries.append((symbol, series))
         else:
+            if strict and (doc or request_symbols is not None):
+                raise ValueError(f"{path}: bound RSI requires complete broker responses")
             for symbol_value, value in doc.items():
                 symbol = _rsi_symbol(symbol_value, f"{path}: symbol")
                 if isinstance(value, dict) and "data" in value:
@@ -481,7 +548,11 @@ def rsi_gate(values, oversold, lookback, confirm, max_entry=None):
                   f"rising {confirm} bar(s) {values[-confirm - 1]:.1f} -> {values[-1]:.1f}")
 
 
-def main():
+def _main(argv=None, failure_state=None):
+    # The machine CLI owns this phase marker. Error text is never used to
+    # decide whether committed source transport has already been validated.
+    if failure_state is None:
+        failure_state = {"phase": "usage"}
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scratch", required=True,
                     help="absolute preflighted scratch whose transport binding owns every input")
@@ -522,6 +593,7 @@ def main():
     ap.add_argument("--dip-entry-pct", type=finite_float_arg, required=True)
     ap.add_argument("--max-spread-buy-pct", type=finite_float_arg, help="MAX_SPREAD_BUY_PCT - enables the bid/ask spread gate; requires bid+ask in quote inputs")
     ap.add_argument("--json-out", help="optional path for machine-readable results")
+    ap.add_argument("--emit-json", action="store_true", help="emit the complete gate document instead of the diagnostic table")
     rsi_input = ap.add_mutually_exclusive_group()
     rsi_input.add_argument("--rsi-file", nargs="+", help="one or more RSI files - each a RAW get_equity_technical_indicators response (symbol read from it) or a symbol-keyed map; enables the RSI curl-up entry gate")
     rsi_input.add_argument(
@@ -536,7 +608,22 @@ def main():
     ap.add_argument("--rsi-max-entry", type=finite_float_arg, help="RSI_MAX_ENTRY - highest CURRENT RSI still buyable (required with an RSI input)")
     ap.add_argument("--rsi-period", type=int,
                     help="RSI_PERIOD, required with an RSI input so the closes fallback uses the configured period")
-    args = ap.parse_args()
+    ap.add_argument("--rsi-interval", help="bind raw RSI responses to this requested interval")
+    ap.add_argument("--rsi-start-time", help="inclusive UTC lower bound for raw RSI series timestamps")
+    ap.add_argument("--rsi-as-of-utc", help="inclusive UTC upper bound for raw RSI series timestamps")
+    ap.add_argument("--rsi-request-symbols", nargs="+", action="extend",
+                    help="exact requested symbol for each successful RSI source, in source order")
+    args = ap.parse_args(argv)
+    request_binding = (args.rsi_interval, args.rsi_start_time, args.rsi_as_of_utc)
+    if any(value is not None for value in request_binding) and not all(value is not None for value in request_binding):
+        ap.error("--rsi-interval, --rsi-start-time, and --rsi-as-of-utc must be supplied together")
+    if all(value is not None for value in request_binding):
+        if args.rsi_file is None and args.rsi_purpose is None:
+            ap.error("RSI request binding requires --rsi-file or --rsi-purpose")
+        if _rsi_utc(args.rsi_start_time, "RSI request start") >= _rsi_utc(args.rsi_as_of_utc, "RSI request end"):
+            ap.error("RSI request window must increase")
+    elif args.rsi_request_symbols is not None:
+        ap.error("--rsi-request-symbols requires the complete RSI request-window binding")
 
     def reject_duplicates(values, option):
         if values is not None and len(values) != len(set(values)):
@@ -545,6 +632,7 @@ def main():
     reject_duplicates(args.bars_purpose, "--bars-purpose")
     reject_duplicates(args.quotes_purpose, "--quotes-purpose")
     reject_duplicates(args.rsi_purpose, "--rsi-purpose")
+    reject_duplicates(args.rsi_request_symbols, "--rsi-request-symbols")
     if args.expected_symbols is not None:
         args.expected_symbols = [
             _rsi_symbol(value, "--expected-symbols")
@@ -566,6 +654,7 @@ def main():
             for label, (_path, document, _raw) in zip(labels, validated)
         ]
 
+    failure_state["phase"] = "source"
     bar_documents = resolve_inputs(args.bars, args.bars_purpose)
     quote_documents = resolve_inputs(args.quotes, args.quotes_purpose)
     rsi_documents = (
@@ -573,6 +662,7 @@ def main():
         if args.rsi_file is not None or args.rsi_purpose is not None
         else []
     )
+    failure_state["phase"] = "evaluation"
 
     rsi_map = None
     if rsi_documents:
@@ -581,7 +671,9 @@ def main():
                 or args.rsi_max_entry is None):
             ap.error("--rsi-file/--rsi-purpose requires --rsi-period, --rsi-oversold, "
                      "--rsi-lookback-bars, --rsi-confirm-bars, and --rsi-max-entry")
-        rsi_map = load_rsi_map(rsi_documents, args.rsi_period)
+        rsi_map = load_rsi_map(rsi_documents, args.rsi_period, interval=args.rsi_interval,
+                               start_time=args.rsi_start_time, as_of_utc=args.rsi_as_of_utc,
+                               request_symbols=args.rsi_request_symbols)
 
     quotes = load_quote_documents(quote_documents)
 
@@ -589,14 +681,15 @@ def main():
     for path, document in bar_documents:
         for result in load_results(document, path):
             sym = result["symbol"].upper()
-            if sym in bars_by_symbol:
+            if sym in bars_by_symbol and not args.emit_json:
                 print(f"WARNING: {sym} appears in more than one --bars file; using the later one", file=sys.stderr)
             bars_by_symbol[sym] = sorted(result["bars"], key=lambda b: b["begins_at"])
 
-    for sym in sorted(set(quotes) - set(bars_by_symbol)):
-        print(f"WARNING: {sym} has a quote but no bars data", file=sys.stderr)
-    for sym in sorted(set(bars_by_symbol) - set(quotes)):
-        print(f"WARNING: {sym} has bars but no quote in --quotes", file=sys.stderr)
+    if not args.emit_json:
+        for sym in sorted(set(quotes) - set(bars_by_symbol)):
+            print(f"WARNING: {sym} has a quote but no bars data", file=sys.stderr)
+        for sym in sorted(set(bars_by_symbol) - set(quotes)):
+            print(f"WARNING: {sym} has bars but no quote in --quotes", file=sys.stderr)
 
     if args.expected_symbols is not None:
         expected = set(args.expected_symbols)
@@ -726,24 +819,26 @@ def main():
                                   f"(need >{args.dip_entry_pct:g}%)")
         rows.append(row)
 
-    fmt = "{:<7} {:>14} {:>9} {:>9} {:>8} {:>7} {}"
-    print(fmt.format("Symbol", "Median $Vol", "5d High", "Current", "%Below", "Spread", "Verdict"))
-    print("-" * 86)
-    for r in rows:
-        print(fmt.format(
-            r["symbol"],
-            "-" if r["median_dollar_volume"] is None else f"${r['median_dollar_volume']:,.0f}",
-            "-" if r["recent_high"] is None else f"${r['recent_high']:.3f}",
-            "-" if r["current_price"] is None else f"${r['current_price']:.3f}",
-            "-" if r["pct_below_high"] is None else f"{r['pct_below_high']:+.2f}%",
-            "-" if r["spread_pct"] is None else f"{r['spread_pct']:.2f}%",
-            ("BUY CANDIDATE" if r["buy_candidate"] else f"SKIP ({r['skip_reason']})")
-            + (" [insufficient history]" if r["insufficient_history"] else ""),
-        ))
-    print()
-    print("Buy candidates:", [r["symbol"] for r in rows if r["buy_candidate"]] or "none")
+    if not args.emit_json:
+        fmt = "{:<7} {:>14} {:>9} {:>9} {:>8} {:>7} {}"
+        print(fmt.format("Symbol", "Median $Vol", "5d High", "Current", "%Below", "Spread", "Verdict"))
+        print("-" * 86)
+        for r in rows:
+            print(fmt.format(
+                r["symbol"],
+                "-" if r["median_dollar_volume"] is None else f"${r['median_dollar_volume']:,.0f}",
+                "-" if r["recent_high"] is None else f"${r['recent_high']:.3f}",
+                "-" if r["current_price"] is None else f"${r['current_price']:.3f}",
+                "-" if r["pct_below_high"] is None else f"{r['pct_below_high']:+.2f}%",
+                "-" if r["spread_pct"] is None else f"{r['spread_pct']:.2f}%",
+                ("BUY CANDIDATE" if r["buy_candidate"] else f"SKIP ({r['skip_reason']})")
+                + (" [insufficient history]" if r["insufficient_history"] else ""),
+            ))
+        print()
+        print("Buy candidates:", [r["symbol"] for r in rows if r["buy_candidate"]] or "none")
 
-    if args.json_out:
+    if args.json_out or args.emit_json:
+        failure_state["phase"] = "output"
         parameter_values = vars(args).copy()
         if args.bars_purpose is not None:
             parameter_values["bars"] = args.bars_purpose
@@ -755,16 +850,64 @@ def main():
             key: value
             for key, value in parameter_values.items()
             if key not in {
-                "scratch", "bars_purpose", "quotes_purpose", "rsi_purpose"
+                "scratch", "bars_purpose", "quotes_purpose", "rsi_purpose", "emit_json"
             }
+            and not (key in {"rsi_interval", "rsi_start_time", "rsi_as_of_utc", "rsi_request_symbols"} and value is None)
         }
-        with open(args.json_out, "w", encoding="utf-8") as f:
-            json.dump({"schema_version": 1, "rsi_gate_enabled": rsi_map is not None,
-                       "params": params, "results": rows},
-                      f, indent=2, allow_nan=False)
-        print(f"JSON written to {args.json_out}")
+        document = {"schema_version": 1, "rsi_gate_enabled": rsi_map is not None,
+                    "params": params, "results": rows}
+        if args.json_out:
+            serialized = json.dumps(document, indent=2, allow_nan=False)
+            with open(args.json_out, "w", encoding="utf-8", newline="\n") as f:
+                f.write(serialized)
+                if args.emit_json:
+                    f.flush()
+                    os.fsync(f.fileno())
+            if args.emit_json:
+                with open(args.json_out, "r", encoding="utf-8", newline="") as f:
+                    if f.read() != serialized:
+                        raise ValueError("evaluator output read-back differs from the computed document")
+            if not args.emit_json:
+                print(f"JSON written to {args.json_out}")
+        if args.emit_json:
+            print(json.dumps(document, allow_nan=False, separators=(",", ":")))
 
     return 0
+
+
+def main(argv=None):
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if "--emit-json" not in arguments:
+        # Preserve the human/table CLI's existing exceptions and diagnostics.
+        return _main(argv)
+    phase = {"phase": "usage"}
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    try:
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            result = _main(arguments, phase)
+        if result != 0:
+            code = "candidate_internal_failed"
+        else:
+            # The successful complete gate document is unchanged. Holding it
+            # until completion prevents a later write/read-back error from
+            # sharing stdout with a false successful document.
+            print(stdout.getvalue(), end="")
+            return 0
+    except SystemExit:
+        code = "candidate_usage_invalid"
+    except Exception:
+        code = {
+            "usage": "candidate_usage_invalid",
+            "source": "candidate_source_transport_failed",
+            "evaluation": "candidate_evaluation_failed",
+            "output": "candidate_output_failed",
+        }.get(phase.get("phase"), "candidate_internal_failed")
+    print(json.dumps({
+        "schema_version": 1, "action": "evaluate-candidates", "ok": False,
+        "error": {"code": code},
+    }, separators=(",", ":")))
+    return 2
 
 
 if __name__ == "__main__":

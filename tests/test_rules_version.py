@@ -114,6 +114,16 @@ class RulesVersionTests(unittest.TestCase):
         result, _ = self.resolve(status="?? rules_version.py\n")
         self.assertEqual(result, "abc1234-dirty")
 
+    def test_daily_loss_driver_and_loader_changes_affect_rules_version(self):
+        for name in ("daily_loss_orchestration.py", "tools/daily_loss_orchestration.js",
+                     "rsi_orchestration.py", "tools/rsi_orchestration.js"):
+            with self.subTest(path=name):
+                result, calls = self.resolve(status="?? " + name + "\n")
+                self.assertEqual(result, "abc1234-dirty")
+                for command in ("log", "status"):
+                    call = next(call for call in calls if call[0] == command)
+                    self.assertIn(name, call)
+
     def test_invalid_hash_or_git_failure_returns_unknown(self):
         result, _ = self.resolve(revision="release-14-gabc1234")
         self.assertEqual(result, "unknown")

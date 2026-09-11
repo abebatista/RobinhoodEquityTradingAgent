@@ -79,7 +79,7 @@ Before START CLOCK, the routine also makes one structured self-report from only 
 After the run is complete, resolve and bind the checked-in resolver's exact Python path as `PYTHON_EXE`, replace `<INVOCATION_ID>` and `<DURATION_MS>`, and copy exactly one matching PowerShell command. For Codex's displayed **Worked for** duration:
 
 ```powershell
-& '<PYTHON_EXE>' run_performance.py observe-task --invocation-id '<INVOCATION_ID>' --task-duration-ms <DURATION_MS> --runner codex --model 'gpt-5.6-sol' --configuration 'reasoning=high' --identity-source manual-ui --clock-source codex-worked-for
+& '<PYTHON_EXE>' run_performance.py observe-task --invocation-id '<INVOCATION_ID>' --task-duration-ms <DURATION_MS> --runner codex --model 'gpt-5.6-terra' --configuration 'reasoning=high' --identity-source manual-ui --clock-source codex-worked-for
 ```
 
 Use this `manual-ui` template only for the named human-observed source; do not relabel runner metadata. The attached value is displayed as **Reference run duration** and remains secondary to the automatic **Comparable run duration**; it is fallback/context for historical or incomplete runs. Fair performance comparisons require the same automatic boundary, session class, workload path, configuration cohort, and preferably rules version. Keep runner/model identity explicit as the comparison dimension. See [README Tested On](README.md#tested-on) for the formulas, source rules, POSIX-shell form, and local comparison dashboard.

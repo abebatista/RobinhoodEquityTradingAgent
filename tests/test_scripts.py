@@ -12877,8 +12877,9 @@ class MarketClockTests(unittest.TestCase):
             "preserves every row and sequence including any retired marker "
             "as non-authorizing audit data",
             "only the exact missing attempted-SECOND coordination terminal",
-            "a supervised post-repair entry-eligible Terra run remains "
-            "pending",
+            "The 2026-09-11 11:33 PT post-repair Terra run completed "
+            "startup, FIRST, and `enter-second`, then omitted DAILY-LOSS "
+            "without an intervening helper or connector error",
         ):
             self.assertIn(required, readme)
         self.assertIn(
@@ -13937,7 +13938,7 @@ class MarketClockTests(unittest.TestCase):
         self.assertIn('`rhmra.transport-state.v1`', finalization)
         self.assertIn('`rhmra.bootstrap-state.v1`', finalization)
         self.assertIn('`rhmra.lease-state.v1`', finalization)
-        self.assertIn('clear all three fixed slots', finalization)
+        self.assertIn('clear all five fixed slots', finalization)
         self.assertIn('`store(key, null)`', finalization)
         self.assertIn('after the nested helper completes', finalization)
 
@@ -14263,7 +14264,7 @@ class MarketClockTests(unittest.TestCase):
             "rhmra.lease-state.v1",
         ):
             self.assertIn(key, finalization)
-        self.assertIn("clear all three fixed slots", finalization)
+        self.assertIn("clear all five fixed slots", finalization)
         self.assertIn(
             "lease release (or proven ownership loss), and lifecycle finish",
             finalization,
@@ -14780,7 +14781,7 @@ class MarketClockTests(unittest.TestCase):
             '& \'<PYTHON_EXE>\' run_performance.py observe-task '
             '--invocation-id \'<INVOCATION_ID>\' '
             '--task-duration-ms <DURATION_MS> --runner codex '
-            '--model \'gpt-5.6-sol\' '
+            '--model \'gpt-5.6-terra\' '
             '--configuration \'reasoning=high\' '
             '--identity-source manual-ui '
             '--clock-source codex-worked-for'
@@ -14838,8 +14839,8 @@ class MarketClockTests(unittest.TestCase):
         with open(os.path.join(ROOT, 'README.md'), encoding='utf-8') as f:
             readme = f.read()
         self.assertIn(
-            'currently recommended deployment candidate is '
-            '**Codex Sol 5.6 (reasoning high)**',
+            'selected deployment candidate for this installation is '
+            '**Codex Terra 5.6 (reasoning high)**',
             readme,
         )
         self.assertIn(
@@ -14867,7 +14868,7 @@ class MarketClockTests(unittest.TestCase):
             'scheduler\'s **Instructions**.', 1
         )[0]
         codex_declaration = (
-            'TIMING_IDENTITY: runner=codex model=gpt-5.6-sol '
+            'TIMING_IDENTITY: runner=codex model=gpt-5.6-terra '
             'config=reasoning=high'
         )
         self.assertEqual(codex_prompt.count('TIMING_IDENTITY:'), 1)
@@ -14927,8 +14928,8 @@ class MarketClockTests(unittest.TestCase):
         ):
             self.assertIn(required, launch_boundary)
         self.assertIn(
-            '**Model: GPT-5.6 Sol** maps to '
-            '`model=gpt-5.6-sol`', codex_prompt
+            '**Model: GPT-5.6 Terra** maps to '
+            '`model=gpt-5.6-terra`', codex_prompt
         )
         self.assertIn(
             '**Reasoning: High** maps to '
@@ -14963,7 +14964,7 @@ class MarketClockTests(unittest.TestCase):
         self.assertIn('does not switch the model', scheduling)
         self.assertIn(
             'Codex automation uses the exact OpenAI model ID '
-            '`gpt-5.6-sol` and '
+            '`gpt-5.6-terra` and '
             '`config=reasoning=high`', scheduling
         )
         self.assertIn(
@@ -16312,7 +16313,7 @@ class MarketClockTests(unittest.TestCase):
             'Do not create or enable a Claude schedule',
             'Existing Claude schedules should remain paused or be disabled',
             'Use this scheduler prompt in Codex',
-            'TIMING_IDENTITY: runner=codex model=gpt-5.6-sol',
+            'TIMING_IDENTITY: runner=codex model=gpt-5.6-terra',
             'both `place_equity_order` and `cancel_equity_order` '
             'approval-gated',
         ):
@@ -16594,8 +16595,8 @@ class MarketClockTests(unittest.TestCase):
         ):
             self.assertIn(required, compatibility)
         self.assertIn(
-            'The currently recommended deployment candidate is '
-            '**Codex Sol 5.6 (reasoning high)**',
+            'The selected deployment candidate for this installation is '
+            '**Codex Terra 5.6 (reasoning high)**',
             readme,
         )
         for required in (
@@ -16623,11 +16624,11 @@ class MarketClockTests(unittest.TestCase):
             self.assertIn(required, quickstart)
 
         routine = documents['robinhood-momentum-routine-autonomous.md']
-        model_note = 'Use **Codex Sol 5.6 (high)**' + routine.split(
-            'Use **Codex Sol 5.6 (high)**', 1
+        model_note = 'Use **Codex Terra 5.6 (high)**' + routine.split(
+            'Use **Codex Terra 5.6 (high)**', 1
         )[1].split('\n', 1)[0]
         for required in (
-            'Use **Codex Sol 5.6 (high)** for this routine',
+            'Use **Codex Terra 5.6 (high)** for this installation',
             'Claude is not a recommended or supported deployment runner',
             'Sonnet 4.6 historically completed live buys and protective '
             'stops',
@@ -16636,7 +16637,7 @@ class MarketClockTests(unittest.TestCase):
             'authorization',
             'Repository instructions cannot override that boundary',
             'Codex Luna 5.6 remains the efficient high-volume option',
-            'not the current unattended recommendation',
+            'Terra remains the selected model',
         ):
             self.assertIn(required, model_note)
         for required in (
